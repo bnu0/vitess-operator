@@ -108,6 +108,7 @@ func (r *ReconcileVitessBackupStorage) reconcileSubcontroller(ctx context.Contex
 					update.Volumes(&(newSpec.Volumes), []corev1.Volume{volume})
 				}
 			}
+			sortVolsSame(&(newSpec.Volumes), curSpec.Volumes)
 			for _, curContainer := range curSpec.Containers {
 				var newContainer *corev1.Container
 				for i, c := range newSpec.Containers {
@@ -122,6 +123,7 @@ func (r *ReconcileVitessBackupStorage) reconcileSubcontroller(ctx context.Contex
 							update.VolumeMounts(&(newContainer.VolumeMounts), []corev1.VolumeMount{mount})
 						}
 					}
+					sortMountsSame(&(newContainer.VolumeMounts), curContainer.VolumeMounts)
 				}
 			}
 			pod.Spec = *newSpec
@@ -133,6 +135,44 @@ func (r *ReconcileVitessBackupStorage) reconcileSubcontroller(ctx context.Contex
 	}
 
 	return resultBuilder.Result()
+}
+
+func sortVolsSame(vols *[]corev1.Volume, order []corev1.Volume) {
+	res := make([]corev1.Volume, 0, len(*vols))
+	found := make(map[string]struct{}, len(*vols))
+	for _, ov := range order {
+		for _, iv := range *vols {
+			if iv.Name == ov.Name {
+				res = append(res, ov)
+				found[iv.Name] = struct{}{}
+			}
+		}
+	}
+	for _, iv := range *vols {
+		if _, ok := found[iv.Name]; !ok {
+			res = append(res, iv)
+		}
+	}
+	*vols = res
+}
+
+func sortMountsSame(mounts *[]corev1.VolumeMount, order []corev1.VolumeMount) {
+	res := make([]corev1.VolumeMount, 0, len(*mounts))
+	found := make(map[string]struct{}, len(*mounts))
+	for _, ov := range order {
+		for _, iv := range *mounts {
+			if iv.Name == ov.Name {
+				res = append(res, ov)
+				found[iv.Name] = struct{}{}
+			}
+		}
+	}
+	for _, iv := range *mounts {
+		if _, ok := found[iv.Name]; !ok {
+			res = append(res, iv)
+		}
+	}
+	*mounts = res
 }
 
 func (r *ReconcileVitessBackupStorage) newSubcontrollerPodSpec(ctx context.Context, vbs *planetscalev2.VitessBackupStorage) (*corev1.PodSpec, error) {

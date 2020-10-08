@@ -100,7 +100,31 @@ func (r *ReconcileVitessBackupStorage) reconcileSubcontroller(ctx context.Contex
 			// clear it out.
 			nodeName := pod.Spec.NodeName
 
-			pod.Spec = *spec
+			curSpec := pod.Spec
+			newSpec := spec.DeepCopy()
+			for _, volume := range curSpec.Volumes {
+				if strings.Index(volume.Name, curSpec.ServiceAccountName+"-token-") == 0 {
+					// copy the volume from the current pod to the replacement:
+					update.Volumes(&(newSpec.Volumes), []corev1.Volume{volume})
+				}
+			}
+			for _, curContainer := range curSpec.Containers {
+				var newContainer *corev1.Container
+				for i, c := range newSpec.Containers {
+					if c.Name == curContainer.Name {
+						newContainer = &(newSpec.Containers[i])
+					}
+				}
+				if newContainer != nil {
+					for _, mount := range curContainer.VolumeMounts {
+						if strings.Index(mount.Name, curSpec.ServiceAccountName+"-token-") == 0 {
+							// copy the mount from the current container to the replacement:
+							update.VolumeMounts(&(newContainer.VolumeMounts), []corev1.VolumeMount{mount})
+						}
+					}
+				}
+			}
+			pod.Spec = *newSpec
 			pod.Spec.NodeName = nodeName
 		},
 	})

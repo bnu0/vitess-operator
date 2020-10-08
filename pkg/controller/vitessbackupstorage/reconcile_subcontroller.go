@@ -108,7 +108,7 @@ func (r *ReconcileVitessBackupStorage) reconcileSubcontroller(ctx context.Contex
 					update.Volumes(&(newSpec.Volumes), []corev1.Volume{volume})
 				}
 			}
-			sortVolsSame(&(newSpec.Volumes), curSpec.Volumes)
+			newSpec.Volumes = sortVolsSame(newSpec.Volumes, curSpec.Volumes)
 			for _, curContainer := range curSpec.Containers {
 				var newContainer *corev1.Container
 				for i, c := range newSpec.Containers {
@@ -123,7 +123,7 @@ func (r *ReconcileVitessBackupStorage) reconcileSubcontroller(ctx context.Contex
 							update.VolumeMounts(&(newContainer.VolumeMounts), []corev1.VolumeMount{mount})
 						}
 					}
-					sortMountsSame(&(newContainer.VolumeMounts), curContainer.VolumeMounts)
+					newContainer.VolumeMounts = sortMountsSame(newContainer.VolumeMounts, curContainer.VolumeMounts)
 				}
 			}
 			pod.Spec = *newSpec
@@ -137,42 +137,42 @@ func (r *ReconcileVitessBackupStorage) reconcileSubcontroller(ctx context.Contex
 	return resultBuilder.Result()
 }
 
-func sortVolsSame(vols *[]corev1.Volume, order []corev1.Volume) {
-	res := make([]corev1.Volume, 0, len(*vols))
-	found := make(map[string]struct{}, len(*vols))
+func sortVolsSame(vols []corev1.Volume, order []corev1.Volume) []corev1.Volume {
+	res := make([]corev1.Volume, 0, len(vols))
+	found := make(map[string]struct{}, len(vols))
 	for _, ov := range order {
-		for _, iv := range *vols {
+		for _, iv := range vols {
 			if iv.Name == ov.Name {
 				res = append(res, ov)
 				found[iv.Name] = struct{}{}
 			}
 		}
 	}
-	for _, iv := range *vols {
+	for _, iv := range vols {
 		if _, ok := found[iv.Name]; !ok {
 			res = append(res, iv)
 		}
 	}
-	*vols = res
+	return res
 }
 
-func sortMountsSame(mounts *[]corev1.VolumeMount, order []corev1.VolumeMount) {
-	res := make([]corev1.VolumeMount, 0, len(*mounts))
-	found := make(map[string]struct{}, len(*mounts))
+func sortMountsSame(mounts []corev1.VolumeMount, order []corev1.VolumeMount) []corev1.VolumeMount {
+	res := make([]corev1.VolumeMount, 0, len(mounts))
+	found := make(map[string]struct{}, len(mounts))
 	for _, ov := range order {
-		for _, iv := range *mounts {
+		for _, iv := range mounts {
 			if iv.Name == ov.Name {
 				res = append(res, ov)
 				found[iv.Name] = struct{}{}
 			}
 		}
 	}
-	for _, iv := range *mounts {
+	for _, iv := range mounts {
 		if _, ok := found[iv.Name]; !ok {
 			res = append(res, iv)
 		}
 	}
-	*mounts = res
+	return res
 }
 
 func (r *ReconcileVitessBackupStorage) newSubcontrollerPodSpec(ctx context.Context, vbs *planetscalev2.VitessBackupStorage) (*corev1.PodSpec, error) {
@@ -216,6 +216,7 @@ func (r *ReconcileVitessBackupStorage) newSubcontrollerPodSpec(ctx context.Conte
 			spec.Containers[i].VolumeMounts = newMounts
 		}
 		spec.ServiceAccountName = vbs.Spec.PodServiceAccountName
+		spec.DeprecatedServiceAccount = vbs.Spec.PodServiceAccountName
 	}
 
 	// Tell the subcontroller which VitessBackupStorage object to process.

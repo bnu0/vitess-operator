@@ -122,6 +122,8 @@ spec:
                   type: object
                   x-kubernetes-preserve-unknown-fields: true
               type: object
+            podServiceAccountName:
+              type: string
           required:
           - location
           type: object

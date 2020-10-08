@@ -293,6 +293,12 @@ type ClusterBackupSpec struct {
 	// Default: builtin
 	// +kubebuilder:validation:Enum=builtin;xtrabackup
 	Engine VitessBackupEngine `json:"engine,omitempty"`
+	// SubcontrollerPodServiceAccountName specifies the serviceAccountName to use when launching subcontroller pods
+	// for these backup locations. Such pods will be launched in the same namespace as the VitessCluster object.
+	// The default (empty string) will cause these pods to inherit the account, token, etc. from the operator itself,
+	// which will not work in another namespace unless an account (and token) of the exact same name has been created
+	// in that namespace.
+	SubcontrollerPodServiceAccountName string `json:"subcontrollerPodServiceAccountName,omitempty"`
 }
 
 // VitessBackupEngine is the backup implementation to use.

@@ -132,6 +132,8 @@ spec:
                     type: object
                   minItems: 1
                   type: array
+                subcontrollerPodServiceAccountName:
+                  type: string
               required:
               - locations
               type: object

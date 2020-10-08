@@ -130,6 +130,30 @@ func (r *ReconcileVitessBackupStorage) newSubcontrollerPodSpec(ctx context.Conte
 		return nil, fmt.Errorf("can't find operator container (name containing %q) in my own Pod", operatorContainerNameSubstring)
 	}
 
+	if vbs.Spec.PodServiceAccountName != "" {
+		// allow the pod to be launched with a specific serviceaccount in the target namespace (which will be the same
+		// namespace as the VitessCluster itself)
+		var newVolumes []corev1.Volume
+		for _, volume := range spec.Volumes {
+			if strings.Index(volume.Name, spec.ServiceAccountName + "-token-") < 0 {
+				// skip volumes from the automounted token
+				newVolumes = append(newVolumes, volume)
+			}
+		}
+		spec.Volumes = newVolumes
+		for i := range spec.Containers {
+			var newMounts []corev1.VolumeMount
+			for _, mount := range spec.Containers[i].VolumeMounts {
+				if strings.Index(mount.Name, spec.ServiceAccountName + "-token-") < 0 {
+					// skip mounts from the automounted token
+					newMounts = append(newMounts, mount)
+				}
+			}
+			spec.Containers[i].VolumeMounts = newMounts
+		}
+		spec.ServiceAccountName = vbs.Spec.PodServiceAccountName
+	}
+
 	// Tell the subcontroller which VitessBackupStorage object to process.
 	update.Env(&container.Env, []corev1.EnvVar{
 		{

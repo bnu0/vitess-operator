@@ -19,6 +19,7 @@ package vitessbackupstorage
 import (
 	"context"
 	"fmt"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -232,6 +233,10 @@ func (r *ReconcileVitessBackupStorage) newSubcontrollerPodSpec(ctx context.Conte
 		{
 			Name:  "HOME",
 			Value: vitessHomeDir,
+		},
+		{
+			Name: k8sutil.WatchNamespaceEnvVar,
+			Value: vbs.Namespace,
 		},
 	})
 

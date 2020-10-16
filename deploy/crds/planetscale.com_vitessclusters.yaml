@@ -126,6 +126,8 @@ spec:
                         - bucket
                         - region
                         type: object
+                      subPath:
+                        type: string
                       volume:
                         type: object
                         x-kubernetes-preserve-unknown-fields: true

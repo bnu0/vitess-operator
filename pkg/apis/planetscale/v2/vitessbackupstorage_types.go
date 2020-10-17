@@ -74,6 +74,9 @@ type VitessBackupLocation struct {
 	// +kubebuilder:validation:MaxLength=25
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([a-z0-9]*[a-z0-9])?$
 	Name string `json:"name,omitempty"`
+	// SubPath gives the subpath in the volume to mount to the backups target.
+	// Only used for Volume-backed backup storage, ignored otherwise.
+	SubPath     string `json:"subPath,omitempty"`
 	// GCS specifies a backup location in Google Cloud Storage.
 	GCS *GCSBackupLocation `json:"gcs,omitempty"`
 	// S3 specifies a backup location in Amazon S3.
